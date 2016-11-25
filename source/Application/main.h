@@ -22,7 +22,21 @@
 #include "platform.h"
 #include "bsp.h"
 #include "nrf_drv_clock.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "timers.h"
+#include "semphr.h"
+#include "ble_top_implementation.h"
 
+
+
+
+
+
+
+
+/* gloable variables declare */
+extern SemaphoreHandle_t 			g_semaphore_ble_event_ready;
 
 
 

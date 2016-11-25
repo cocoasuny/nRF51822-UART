@@ -36,7 +36,8 @@ volatile HardFault_stack_t * HardFault_p_stack;
 __WEAK void HardFault_process(HardFault_stack_t * p_stack)
 {
     // Restart the system by default
-    NVIC_SystemReset();
+//    NVIC_SystemReset();
+	while(1);
 }
 /*lint -restore */
 
@@ -57,8 +58,9 @@ void HardFault_c_handler(uint32_t * p_stack_address)
         }
     #endif // __CORTEX_M == 0x04
 #endif // DEBUG_NRF
-    NRF_LOG_ERROR("Hardfault PC:%x\r\n", ((HardFault_stack_t *)p_stack_address)->pc);
-    NRF_LOG_FINAL_FLUSH();
+    printf("Hardfault PC:%x\r\n", ((HardFault_stack_t *)p_stack_address)->pc);
+		
+//    NRF_LOG_FINAL_FLUSH();
     HardFault_process((HardFault_stack_t *)p_stack_address);
 }
 #endif //HARDFAULT_HANDLER_ENABLED

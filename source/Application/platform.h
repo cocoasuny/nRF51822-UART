@@ -20,6 +20,21 @@
 /* Includes ------------------------------------------------------------------*/
 
 
+/* debug switch --------------------------------------------------------------*/
+#define HARDFAULT_HANDLER_ENABLED	1
+
+
+/* task stack and priority define */
+#define BLE_TOP_IMPLEMENTATION_STACK					256
+#define BLE_TOP_IMPLEMENTATION_PRIORITY					2				
+
+
+
+
+
+
+
+
 /* gpio and buffer define for uart */
 #define APP_UART_ENABLED	1
 #define RETARGET_ENABLED	1

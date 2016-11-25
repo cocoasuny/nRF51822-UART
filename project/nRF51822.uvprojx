@@ -378,23 +378,9 @@
       <Groups>
         <Group>
           <GroupName>Drivers/CMSIS</GroupName>
-          <Files>
-            <File>
-              <FileName>system_nrf51.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\source\Drivers\CMSIS\system_nrf51.c</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>Application/MDK-ARM</GroupName>
-          <Files>
-            <File>
-              <FileName>arm_startup_nrf51.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>..\source\Drivers\CMSIS\arm_startup_nrf51.s</FilePath>
-            </File>
-          </Files>
         </Group>
         <Group>
           <GroupName>Application</GroupName>
@@ -403,6 +389,31 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\source\Application\main.c</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOSConfig.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\source\Application\FreeRTOSConfig.h</FilePath>
+            </File>
+            <File>
+              <FileName>platform.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\source\Application\platform.h</FilePath>
+            </File>
+            <File>
+              <FileName>hardfault_handler_keil.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\SDK1210\libraries\hardfault\nrf51\handler\hardfault_handler_keil.c</FilePath>
+            </File>
+            <File>
+              <FileName>hardfault_implementation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\SDK1210\libraries\hardfault\hardfault_implementation.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble_top_implementation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\Application\ble_top_implementation.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -564,6 +575,9 @@
         <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
+        <Group>
+          <GroupName>::Device</GroupName>
+        </Group>
       </Groups>
     </Target>
   </Targets>
@@ -592,19 +606,29 @@
           <targetInfo name="nRF51822" versionMatchMode="fixed"/>
         </targetInfos>
       </component>
+      <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.9.0" condition="nRF51 Series and CMSIS">
+        <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.9.0"/>
+        <targetInfos>
+          <targetInfo name="nRF51822"/>
+        </targetInfos>
+      </component>
     </components>
     <files>
-      <file attr="config" category="source" condition="ARM Compiler" name="Device\Source\arm\arm_startup_nrf51.s" version="8.9.0">
-        <instance index="0" removed="1">RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s</instance>
+      <file attr="config" category="source" condition="ARM Compiler" name="Device\Source\arm\arm_startup_nrf51.s">
+        <instance index="0">RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s</instance>
         <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.9.0" condition="nRF51 Series and CMSIS"/>
         <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.9.0"/>
-        <targetInfos/>
+        <targetInfos>
+          <targetInfo name="nRF51822"/>
+        </targetInfos>
       </file>
-      <file attr="config" category="source" name="Device\Source\system_nrf51.c" version="8.9.0">
-        <instance index="0" removed="1">RTE\Device\nRF51422_xxAC\system_nrf51.c</instance>
+      <file attr="config" category="source" name="Device\Source\system_nrf51.c">
+        <instance index="0">RTE\Device\nRF51422_xxAC\system_nrf51.c</instance>
         <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.9.0" condition="nRF51 Series and CMSIS"/>
         <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.9.0"/>
-        <targetInfos/>
+        <targetInfos>
+          <targetInfo name="nRF51822"/>
+        </targetInfos>
       </file>
     </files>
   </RTE>
