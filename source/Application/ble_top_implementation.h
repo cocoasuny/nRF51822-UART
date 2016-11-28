@@ -19,6 +19,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "ble_db_discovery.h"
+#include "ble_conn_params.h"
+#include "app_timer.h"
+#include "ble_advdata.h"
+#include "ble_advertising.h"
+#include "fstorage.h"
 
 
 /* defines for ble pareameters */

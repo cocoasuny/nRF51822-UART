@@ -15,6 +15,52 @@
   
 #include "ble_top_implementation.h"
 
+
+/* Central related. */
+
+#define APP_TIMER_PRESCALER         0                                             /**< Value of the RTC1 PRESCALER register. */
+
+
+#define SCAN_INTERVAL               0x00A0                                        /**< Determines scan interval in units of 0.625 millisecond. */
+#define SCAN_WINDOW                 0x0050                                        /**< Determines scan window in units of 0.625 millisecond. */
+#define SCAN_TIMEOUT                0
+
+#define MIN_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(7.5, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
+#define MAX_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(30, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
+#define SLAVE_LATENCY               0                                             /**< Determines slave latency in terms of connection events. */
+#define SUPERVISION_TIMEOUT         (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 milliseconds. */
+
+/**
+ * @brief Parameters used when scanning.
+ */
+static const ble_gap_scan_params_t m_scan_params =
+{
+    .active   = 1,
+    .interval = SCAN_INTERVAL,
+    .window   = SCAN_WINDOW,
+    .timeout  = SCAN_TIMEOUT,
+    #if (NRF_SD_BLE_API_VERSION == 2)
+        .selective   = 0,
+        .p_whitelist = NULL,
+    #endif
+    #if (NRF_SD_BLE_API_VERSION == 3)
+        .use_whitelist = 0,
+    #endif
+};
+
+/* peripheral related. */
+#define DEVICE_NAME                      "NordicLESCApp"                            /**< Name of device used for advertising. */
+#define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
+#define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 187.5 ms. */
+#define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
+
+#define FIRST_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT     3                                          /**< Number of attempts before giving up the connection parameter negotiation. */
+
+
+
+
 /* private variables define */
 
 
@@ -24,6 +70,15 @@ static void ble_stack_init(void);
 static uint32_t ble_new_event_handler(void);
 static void sys_evt_dispatch(uint32_t sys_evt);
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt);
+static void db_discovery_init(void);
+static void db_disc_handler(ble_db_discovery_evt_t * p_evt);
+static void gap_params_init(void);
+static void conn_params_init(void);
+static void conn_params_error_handler(uint32_t nrf_error);
+static void advertising_init(void);
+static void on_adv_evt(ble_adv_evt_t ble_adv_evt);
+static void adv_scan_start(void);
+static void scan_start(void);
 
 
 /**
@@ -36,11 +91,14 @@ void ble_top_implementation_thread(void * arg)
 {
 	UNUSED_PARAMETER(arg);
 	
-	ble_stack_init();
-	
-	
-	
-	
+	/* ble stack init */
+	ble_stack_init();	
+	db_discovery_init();
+	gap_params_init();
+	conn_params_init();
+	//services_init();
+	advertising_init();
+	adv_scan_start();
 	
     while (1)
     {
@@ -56,7 +114,55 @@ void ble_top_implementation_thread(void * arg)
         intern_softdevice_events_execute();
     }	
 }
+/**@brief Function for initiating scanning.
+ */
+static void scan_start(void)
+{
+    ret_code_t err_code;
 
+    (void) sd_ble_gap_scan_stop();
+
+    err_code = sd_ble_gap_scan_start(&m_scan_params);
+    // It is okay to ignore this error since we are stopping the scan anyway.
+    if (err_code != NRF_ERROR_INVALID_STATE)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
+//    NRF_LOG_INFO("Scanning\r\n");        
+}
+/**@brief Function for initiating advertising and scanning.
+ */
+static void adv_scan_start(void)
+{
+    ret_code_t err_code;
+    uint32_t count;
+
+    //check if there are no flash operations in progress
+    err_code = fs_queued_op_count_get(&count);
+    APP_ERROR_CHECK(err_code);
+
+    if (count == 0)
+    {
+        // Start scanning for peripherals and initiate connection to devices which
+        // advertise Heart Rate or Running speed and cadence UUIDs.
+        scan_start();
+
+        // Turn on the LED to signal scanning.
+//        LEDS_ON(CENTRAL_SCANNING_LED);
+
+        // Start advertising.
+        err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+        APP_ERROR_CHECK(err_code);
+//        NRF_LOG_INFO("Advertising\r\n");    
+    }
+}
+
+/**
+  * @brief  Function for initializing the BLE stack. 
+  * @note   Initializes the SoftDevice and the BLE event interrupts.
+  * @param  None
+  * @retval None
+  */
 static void ble_stack_init(void)
 {
     uint32_t err_code;
@@ -89,6 +195,30 @@ static void ble_stack_init(void)
     // Register with the SoftDevice handler module for BLE events.
     err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
     APP_ERROR_CHECK(err_code);
+}
+/**@brief Function for handling advertising events.
+ *
+ * @param[in] ble_adv_evt  Advertising event.
+ */
+static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
+{
+    switch (ble_adv_evt)
+    {
+        case BLE_ADV_EVT_FAST:
+//            LEDS_ON(PERIPHERAL_ADVERTISING_LED);
+            break;
+
+        case BLE_ADV_EVT_IDLE:
+        {
+            ret_code_t err_code;
+            err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
+            APP_ERROR_CHECK(err_code);
+        } break;
+
+        default:
+            // No implementation needed.
+            break;
+    }
 }
 /**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
  *
@@ -128,15 +258,15 @@ static void sys_evt_dispatch(uint32_t sys_evt)
 //    // so that it can report correctly to the Advertising module.
 //    ble_advertising_on_sys_evt(sys_evt);
 }
+
 /**
- * @brief Event handler for new BLE events
- *
- * This function is called from the SoftDevice handler.
- * It is called from interrupt level.
- *
- * @return The returned value is checked in the softdevice_handler module,
- *         using the APP_ERROR_CHECK macro.
- */
+  * @brief  Event handler for new BLE events
+  * @note   This function is called from the SoftDevice handler. 
+  *         It is called from interrupt level.
+  * @param  None
+  * @retval The returned value is checked in the softdevice_handler module,
+  *         using the APP_ERROR_CHECK macro.
+  */
 static uint32_t ble_new_event_handler(void)
 {
     BaseType_t yield_req = pdFALSE;
@@ -146,6 +276,127 @@ static uint32_t ble_new_event_handler(void)
     UNUSED_VARIABLE(xSemaphoreGiveFromISR(g_semaphore_ble_event_ready, &yield_req));
     portYIELD_FROM_ISR(yield_req);
     return NRF_SUCCESS;
+}
+
+/**
+  * @brief  Function for the GAP initialization.
+  * @note   This function sets up all the necessary GAP (Generic Access Profile) parameters of the
+  *         device including the device name, appearance, and the preferred connection parameters.
+  * @param  None
+  * @retval None
+  */
+static void gap_params_init(void)
+{
+    uint32_t                err_code;
+    ble_gap_conn_params_t   gap_conn_params;
+    ble_gap_conn_sec_mode_t sec_mode;
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
+
+    err_code = sd_ble_gap_device_name_set(&sec_mode,
+                                          (const uint8_t *)DEVICE_NAME,
+                                          strlen(DEVICE_NAME));
+    APP_ERROR_CHECK(err_code);
+
+    memset(&gap_conn_params, 0, sizeof(gap_conn_params));
+
+    gap_conn_params.min_conn_interval = MIN_CONNECTION_INTERVAL;
+    gap_conn_params.max_conn_interval = MAX_CONNECTION_INTERVAL;
+    gap_conn_params.slave_latency     = SLAVE_LATENCY;
+    gap_conn_params.conn_sup_timeout  = SUPERVISION_TIMEOUT;
+
+    err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
+    APP_ERROR_CHECK(err_code);
+}
+/**@brief Function for handling errors from the Connection Parameters module.
+ *
+ * @param[in] nrf_error  Error code containing information about what went wrong.
+ */
+static void conn_params_error_handler(uint32_t nrf_error)
+{
+    APP_ERROR_HANDLER(nrf_error);
+}
+
+/**
+  * @brief  Function for initializing the Connection Parameters module.
+  * @note   Connection Parameters
+  * @param  None
+  * @retval None
+  */
+static void conn_params_init(void)
+{
+    uint32_t               err_code;
+    ble_conn_params_init_t cp_init;
+
+    memset(&cp_init, 0, sizeof(cp_init));
+
+    cp_init.p_conn_params                  = NULL;
+    cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
+    cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
+    cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
+    cp_init.start_on_notify_cccd_handle    = BLE_CONN_HANDLE_INVALID; // Start upon connection.
+    cp_init.disconnect_on_fail             = true;
+    cp_init.evt_handler                    = NULL;  // Ignore events.
+    cp_init.error_handler                  = conn_params_error_handler;
+
+    err_code = ble_conn_params_init(&cp_init);
+    APP_ERROR_CHECK(err_code);
+}
+/**@brief Function for handling database discovery events.
+ * @details This function is callback function to handle events from the database discovery module.
+ *          Depending on the UUIDs that are discovered, this function should forward the events
+ *          to their respective services.
+ * @param[in] p_event  Pointer to the database discovery event.
+ * @retval None
+ */
+static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
+{
+//    ble_hrs_on_db_disc_evt(&m_ble_hrs_c, p_evt);
+}
+
+/**
+  * @brief  Database discovery initialization.
+  * @note   Database discovery initialization. 
+  * @param  None
+  * @retval None
+  */
+static void db_discovery_init(void)
+{
+    ret_code_t err_code = ble_db_discovery_init(db_disc_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+/**
+  * @brief  Function for initializing the Advertising functionality.
+  * @note   Function for initializing the Advertising functionality.
+  * @param  None
+  * @retval None
+  */
+static void advertising_init(void)
+{
+    uint32_t               err_code;
+    ble_advdata_t          advdata;
+    ble_adv_modes_config_t options;
+	static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
+                                       {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
+
+    // Build advertising data struct to pass into @ref ble_advertising_init.
+    memset(&advdata, 0, sizeof(advdata));
+
+    advdata.name_type               = BLE_ADVDATA_FULL_NAME;
+    advdata.include_appearance      = true;
+    advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
+    advdata.uuids_complete.p_uuids  = m_adv_uuids;
+
+    memset(&options, 0, sizeof(options));
+    options.ble_adv_fast_enabled  = true;
+    options.ble_adv_fast_interval = APP_ADV_INTERVAL;
+    options.ble_adv_fast_timeout  = APP_ADV_TIMEOUT_IN_SECONDS;
+
+    err_code = ble_advertising_init(&advdata, NULL, &options, on_adv_evt, NULL);
+    APP_ERROR_CHECK(err_code);
+
 }
 /************************ (C) COPYRIGHT Chengdu CloudCare Healthcare Co., Ltd. *****END OF FILE****/
 
