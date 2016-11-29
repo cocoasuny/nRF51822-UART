@@ -41,7 +41,7 @@ static void logger_thread(void * arg)
 
     while(1)
     {
-		printf("Test\r\n");
+//		printf("Test\r\n");
 		vTaskDelay(1000);
     }
 }

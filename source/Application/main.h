@@ -27,7 +27,9 @@
 #include "timers.h"
 #include "semphr.h"
 #include "ble_top_implementation.h"
-
+#include "ble_central_manage.h"
+#include "ble_hci.h"
+#include "ble_conn_state.h"
 
 
 

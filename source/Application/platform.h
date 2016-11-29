@@ -22,6 +22,7 @@
 
 /* debug switch --------------------------------------------------------------*/
 #define HARDFAULT_HANDLER_ENABLED	1
+#define DEBUG_BLE_CONNECT
 
 
 /* task stack and priority define */

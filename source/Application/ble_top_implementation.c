@@ -16,37 +16,6 @@
 #include "ble_top_implementation.h"
 
 
-/* Central related. */
-
-#define APP_TIMER_PRESCALER         0                                             /**< Value of the RTC1 PRESCALER register. */
-
-
-#define SCAN_INTERVAL               0x00A0                                        /**< Determines scan interval in units of 0.625 millisecond. */
-#define SCAN_WINDOW                 0x0050                                        /**< Determines scan window in units of 0.625 millisecond. */
-#define SCAN_TIMEOUT                0
-
-#define MIN_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(7.5, UNIT_1_25_MS)   /**< Determines minimum connection interval in milliseconds. */
-#define MAX_CONNECTION_INTERVAL     (uint16_t) MSEC_TO_UNITS(30, UNIT_1_25_MS)    /**< Determines maximum connection interval in milliseconds. */
-#define SLAVE_LATENCY               0                                             /**< Determines slave latency in terms of connection events. */
-#define SUPERVISION_TIMEOUT         (uint16_t) MSEC_TO_UNITS(4000, UNIT_10_MS)    /**< Determines supervision time-out in units of 10 milliseconds. */
-
-/**
- * @brief Parameters used when scanning.
- */
-static const ble_gap_scan_params_t m_scan_params =
-{
-    .active   = 1,
-    .interval = SCAN_INTERVAL,
-    .window   = SCAN_WINDOW,
-    .timeout  = SCAN_TIMEOUT,
-    #if (NRF_SD_BLE_API_VERSION == 2)
-        .selective   = 0,
-        .p_whitelist = NULL,
-    #endif
-    #if (NRF_SD_BLE_API_VERSION == 3)
-        .use_whitelist = 0,
-    #endif
-};
 
 /* peripheral related. */
 #define DEVICE_NAME                      "NordicLESCApp"                            /**< Name of device used for advertising. */
@@ -78,7 +47,6 @@ static void conn_params_error_handler(uint32_t nrf_error);
 static void advertising_init(void);
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt);
 static void adv_scan_start(void);
-static void scan_start(void);
 
 
 /**
@@ -114,22 +82,8 @@ void ble_top_implementation_thread(void * arg)
         intern_softdevice_events_execute();
     }	
 }
-/**@brief Function for initiating scanning.
- */
-static void scan_start(void)
-{
-    ret_code_t err_code;
 
-    (void) sd_ble_gap_scan_stop();
 
-    err_code = sd_ble_gap_scan_start(&m_scan_params);
-    // It is okay to ignore this error since we are stopping the scan anyway.
-    if (err_code != NRF_ERROR_INVALID_STATE)
-    {
-        APP_ERROR_CHECK(err_code);
-    }
-//    NRF_LOG_INFO("Scanning\r\n");        
-}
 /**@brief Function for initiating advertising and scanning.
  */
 static void adv_scan_start(void)
@@ -220,25 +174,42 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             break;
     }
 }
-/**@brief Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
- *
- * @details This function is called from the BLE Stack event interrupt handler after a BLE stack
+
+/**
+  * @brief  Function for dispatching a BLE stack event to all modules with a BLE stack event handler.
+  * @note   This function is called from the BLE Stack event interrupt handler after a BLE stack
  *          event has been received.
- *
- * @param[in]   p_ble_evt   Bluetooth stack event.
- */
+  * @param  p_ble_evt   Bluetooth stack event.
+  * @retval None
+  */
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
+	uint16_t conn_handle;
+    uint16_t role;
+	
     /** The Connection state module has to be fed BLE events in order to function correctly
      * Remember to call ble_conn_state_on_ble_evt before calling any ble_conns_state_* functions. */
-//    ble_conn_state_on_ble_evt(p_ble_evt);
-//    pm_on_ble_evt(p_ble_evt);
-//    ble_hrs_on_ble_evt(&m_hrs, p_ble_evt);
-//    ble_bas_on_ble_evt(&m_bas, p_ble_evt);
-//    ble_conn_params_on_ble_evt(p_ble_evt);
-//    bsp_btn_ble_on_ble_evt(p_ble_evt);
-//    on_ble_evt(p_ble_evt);
-//    ble_advertising_on_ble_evt(p_ble_evt);
+    ble_conn_state_on_ble_evt(p_ble_evt);
+	
+	// The connection handle should really be retrievable for any event type.
+    conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+    role        = ble_conn_state_role(conn_handle);
+	
+    // Based on the role this device plays in the connection, dispatch to the right applications.
+    if (role == BLE_GAP_ROLE_PERIPH)
+    {
+		ble_advertising_on_ble_evt(p_ble_evt);
+		ble_conn_params_on_ble_evt(p_ble_evt);
+	}
+	else if ((role == BLE_GAP_ROLE_CENTRAL) || (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_REPORT))
+	{
+        /** on_ble_central_evt will update the connection handles, so we want to execute it
+         * after dispatching to the central applications upon disconnection. */
+        if (p_ble_evt->header.evt_id != BLE_GAP_EVT_DISCONNECTED)
+        {
+            on_ble_central_evt(p_ble_evt);
+        }		
+	}  
 }
 /**@brief Function for dispatching a system event to interested modules.
  *
@@ -398,5 +369,8 @@ static void advertising_init(void)
     APP_ERROR_CHECK(err_code);
 
 }
+
+
+
 /************************ (C) COPYRIGHT Chengdu CloudCare Healthcare Co., Ltd. *****END OF FILE****/
 
