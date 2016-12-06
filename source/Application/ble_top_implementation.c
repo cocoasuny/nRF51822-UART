@@ -20,8 +20,8 @@
 /* peripheral related. */
 #define DEVICE_NAME                      "NordicLESCApp"                            /**< Name of device used for advertising. */
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
-#define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 187.5 ms. */
-#define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
+#define APP_ADV_INTERVAL                 40                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 187.5 ms. */
+#define APP_ADV_TIMEOUT_IN_SECONDS       60                                        /**< The advertising timeout in units of seconds. */
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
@@ -47,7 +47,7 @@ static void conn_params_error_handler(uint32_t nrf_error);
 static void advertising_init(void);
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt);
 static void adv_scan_start(void);
-
+static void services_init(void);
 
 /**
   * @brief  ble_top_implementation_thread 
@@ -64,7 +64,7 @@ void ble_top_implementation_thread(void * arg)
 	db_discovery_init();
 	gap_params_init();
 	conn_params_init();
-	//services_init();
+	services_init();
 	advertising_init();
 	adv_scan_start();
 	
@@ -345,11 +345,15 @@ static void db_discovery_init(void)
   */
 static void advertising_init(void)
 {
-    uint32_t               err_code;
-    ble_advdata_t          advdata;
-    ble_adv_modes_config_t options;
-	static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
-                                       {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
+    uint32_t               				err_code;
+    ble_advdata_t          				advdata;
+	ble_advdata_t              			scanrsp;
+    ble_adv_modes_config_t 				options;
+	ble_advdata_manuf_data_t    		manuf;
+	uint8_array_t              			adv_manuf_data_array;
+	uint8_t                             manufdata[2];
+	ble_uuid_t 							scanrsp_uuids[] = {BLE_UUID_PASSKEY_AUTH_SERVICE,BLE_UUID_TYPE_BLE};
+    ble_uuid_t							adv_uuids[] = {CHECK_UP_UUID_SERVICE,BLE_UUID_TYPE_BLE};
 
     // Build advertising data struct to pass into @ref ble_advertising_init.
     memset(&advdata, 0, sizeof(advdata));
@@ -357,19 +361,60 @@ static void advertising_init(void)
     advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     advdata.include_appearance      = true;
     advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    advdata.uuids_complete.p_uuids  = m_adv_uuids;
+    advdata.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(adv_uuids[0]);
+    advdata.uuids_complete.p_uuids  = adv_uuids;
 
+	/* advertise manufactor data */
+	manufdata[0]                    = g_DeviceInformation.SeriNum[2];
+	manufdata[1]                    = g_DeviceInformation.SeriNum[3];
+	adv_manuf_data_array.p_data     = manufdata;
+	adv_manuf_data_array.size       = 2;
+	manuf.company_identifier        = g_DeviceInformation.SeriNum[1]*256 + g_DeviceInformation.SeriNum[0];
+	manuf.data                      = adv_manuf_data_array;
+	advdata.p_manuf_specific_data   = &manuf;
+	
+	memset(&scanrsp, 0, sizeof(scanrsp));
+    scanrsp.uuids_complete.uuid_cnt = sizeof(scanrsp_uuids) / sizeof(scanrsp_uuids[0]);
+    scanrsp.uuids_complete.p_uuids  = scanrsp_uuids;
+	
     memset(&options, 0, sizeof(options));
     options.ble_adv_fast_enabled  = true;
     options.ble_adv_fast_interval = APP_ADV_INTERVAL;
     options.ble_adv_fast_timeout  = APP_ADV_TIMEOUT_IN_SECONDS;
 
-    err_code = ble_advertising_init(&advdata, NULL, &options, on_adv_evt, NULL);
+    err_code = ble_advertising_init(&advdata, &scanrsp, &options, on_adv_evt, NULL);
     APP_ERROR_CHECK(err_code);
 
 }
-
+/**
+  * @brief  Function for initializing the service
+  * @note   Function for initializing the service
+  * @param  None
+  * @retval None
+  */
+static void services_init(void)
+{
+	uint32_t						err_code;
+	ble_checkup_service_init_t		checkup_service_init;
+	ble_passkey_service_init_t		passkey_service_init;
+	
+	/* Add immediately measure service */
+	memset(&checkup_service_init,0,sizeof(ble_checkup_service_init_t));
+	err_code = ble_checkup_service_init(&gBleServiceCheckUp,&checkup_service_init);
+	if(err_code != NRF_SUCCESS)
+	{
+		APP_ERROR_CHECK(err_code);
+	}
+	
+	
+	/* Add passkey confirm service */
+	memset(&passkey_service_init,0,sizeof(ble_passkey_service_init_t));
+	err_code = ble_passkey_service_init(&gBleServicePasskey,&passkey_service_init);
+	if(err_code != NRF_SUCCESS)
+	{
+		APP_ERROR_CHECK(err_code);
+	}
+}
 
 
 /************************ (C) COPYRIGHT Chengdu CloudCare Healthcare Co., Ltd. *****END OF FILE****/

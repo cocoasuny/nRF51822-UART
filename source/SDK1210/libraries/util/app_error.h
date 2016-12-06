@@ -135,7 +135,7 @@ static __INLINE void app_error_log(uint32_t id, uint32_t pc, uint32_t info)
 static __INLINE void app_error_print(uint32_t id, uint32_t pc, uint32_t info)
 {
     unsigned int tmp = id;
-    printf("app_error_print():\r\n");
+    printf("\r\napp_error_print():\r\n");
     printf("Fault identifier:  0x%X\r\n", tmp);
     printf("Program counter:   0x%X\r\n", tmp = pc);
     printf("Fault information: 0x%X\r\n", tmp = info);

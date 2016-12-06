@@ -297,8 +297,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20001fe8</StartAddress>
-                <Size>0x6018</Size>
+                <StartAddress>0x20002800</StartAddress>
+                <Size>0x5800</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define>BLE_STACK_SUPPORT_REQD __STACK_SIZE=2048 __HEAP_SIZE=1024 NRF51422 BOARD_PCA10028 S130 NRF_SD_BLE_API_VERSION=2 NRF51 SOFTDEVICE_PRESENT FREERTOS</Define>
               <Undefine></Undefine>
-              <IncludePath>..\source\Application;..\source\BSP;..\source\Drivers;..\source\Middlewares\freertos;..\source\Middlewares\freertos\source\include;..\source\Middlewares\freertos\portable\ARM\nrf51;..\source\Middlewares\freertos\portable\CMSIS\nrf51;..\source\SDK1210\softdevice\common\softdevice_handler;..\source\SDK1210\softdevice\s130\headers;..\source\SDK1210\libraries\util;..\source\SDK1210\drivers_nrf\hal;..\source\SDK1210\drivers_nrf\clock;..\source\SDK1210\drivers_nrf\common;..\source\SDK1210\libraries\log;..\source\SDK1210\libraries\log\src;..\source\SDK1210\libraries\uart;..\source\SDK1210\libraries\fifo;..\source\SDK1210\libraries;..\source\SDK1210\drivers_nrf;..\source\SDK1210\drivers_nrf\uart;..\source\nRF_BLE\ble_advertising;..\source\nRF_BLE\ble_db_discovery;..\source\nRF_BLE\common;..\source\SDK1210\libraries\fstorage;..\source\SDK1210\libraries\experimental_section_vars;..\source\SDK1210\libraries\timer;..\source\nRF_BLE\ble_central_manage</IncludePath>
+              <IncludePath>..\source\Application;..\source\BSP;..\source\Drivers;..\source\Middlewares\freertos;..\source\Middlewares\freertos\source\include;..\source\Middlewares\freertos\portable\ARM\nrf51;..\source\Middlewares\freertos\portable\CMSIS\nrf51;..\source\SDK1210\softdevice\common\softdevice_handler;..\source\SDK1210\softdevice\s130\headers;..\source\SDK1210\libraries\util;..\source\SDK1210\drivers_nrf\hal;..\source\SDK1210\drivers_nrf\clock;..\source\SDK1210\drivers_nrf\common;..\source\SDK1210\libraries\log;..\source\SDK1210\libraries\log\src;..\source\SDK1210\libraries\uart;..\source\SDK1210\libraries\fifo;..\source\SDK1210\libraries;..\source\SDK1210\drivers_nrf;..\source\SDK1210\drivers_nrf\uart;..\source\nRF_BLE\ble_advertising;..\source\nRF_BLE\ble_db_discovery;..\source\nRF_BLE\common;..\source\SDK1210\libraries\fstorage;..\source\SDK1210\libraries\experimental_section_vars;..\source\SDK1210\libraries\timer;..\source\nRF_BLE\ble_central_manage;..\source\nRF_BLE\ble_peripheral_services</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -489,6 +489,16 @@
               <FileName>ble_central_manage.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\source\nRF_BLE\ble_central_manage\ble_central_manage.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble_service_passkey.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\nRF_BLE\ble_peripheral_services\ble_service_passkey.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble_service_checkup.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\nRF_BLE\ble_peripheral_services\ble_service_checkup.c</FilePath>
             </File>
           </Files>
         </Group>

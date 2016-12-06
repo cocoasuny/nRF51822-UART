@@ -18,6 +18,7 @@
 /* gloable variables define */
 SemaphoreHandle_t 			g_semaphore_ble_event_ready = NULL;				/**< Semaphore raised if there is a new event to be 
 																				processed in the BLE thread. */
+DeviceInfomation_t  		g_DeviceInformation; //硬件设备信息
 
 /* private variables define */
 static TaskHandle_t 				m_logger_thread;					  	/**< Definition of Logger thread. */

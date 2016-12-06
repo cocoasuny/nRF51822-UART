@@ -19,6 +19,7 @@
 
 #include "platform.h"
 #include "bsp_uart.h"
+#include "main.h"
 
 void bsp_init(void);
 
