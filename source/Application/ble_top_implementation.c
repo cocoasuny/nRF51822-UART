@@ -18,10 +18,10 @@
 
 
 /* peripheral related. */
-#define DEVICE_NAME                      "NordicLESCApp"                            /**< Name of device used for advertising. */
+#define DEVICE_NAME                      "BLE_UART"                                 /**< Name of device used for advertising. */
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
-#define APP_ADV_INTERVAL                 40                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 187.5 ms. */
-#define APP_ADV_TIMEOUT_IN_SECONDS       60                                        /**< The advertising timeout in units of seconds. */
+#define APP_ADV_INTERVAL                 40                                         /**< The advertising interval (in units of 0.625 ms). This value corresponds to 187.5 ms. */
+#define APP_ADV_TIMEOUT_IN_SECONDS       60                                         /**< The advertising timeout in units of seconds. */
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
@@ -47,7 +47,7 @@ static void conn_params_error_handler(uint32_t nrf_error);
 static void advertising_init(void);
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt);
 static void adv_scan_start(void);
-static void services_init(void);
+static void periphral_services_init(void);
 
 /**
   * @brief  ble_top_implementation_thread 
@@ -64,7 +64,7 @@ void ble_top_implementation_thread(void * arg)
 	db_discovery_init();
 	gap_params_init();
 	conn_params_init();
-	services_init();
+	periphral_services_init();
 	advertising_init();
 	adv_scan_start();
 	
@@ -159,7 +159,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_FAST:
-//            LEDS_ON(PERIPHERAL_ADVERTISING_LED);
+            bsp_led_toggle(LED2);
             break;
 
         case BLE_ADV_EVT_IDLE:
@@ -392,19 +392,19 @@ static void advertising_init(void)
   * @param  None
   * @retval None
   */
-static void services_init(void)
+static void periphral_services_init(void)
 {
 	uint32_t						err_code;
 	ble_checkup_service_init_t		checkup_service_init;
 	ble_passkey_service_init_t		passkey_service_init;
 	
 	/* Add immediately measure service */
-	memset(&checkup_service_init,0,sizeof(ble_checkup_service_init_t));
-	err_code = ble_checkup_service_init(&gBleServiceCheckUp,&checkup_service_init);
-	if(err_code != NRF_SUCCESS)
-	{
-		APP_ERROR_CHECK(err_code);
-	}
+//	memset(&checkup_service_init,0,sizeof(ble_checkup_service_init_t));
+//	err_code = ble_checkup_service_init(&gBleServiceCheckUp,&checkup_service_init);
+//	if(err_code != NRF_SUCCESS)
+//	{
+//		APP_ERROR_CHECK(err_code);
+//	}
 	
 	
 	/* Add passkey confirm service */

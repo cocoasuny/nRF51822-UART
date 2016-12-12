@@ -51,7 +51,11 @@
 #define CTS_PIN_NUMBER 				10    // UART Clear To Send pin number. Not used if HWFC is set to false
 #define RTS_PIN_NUMBER 				8     // Not used if HWFC is set to false
 
-
+/* gpio define for leds */
+#define LED_1          21
+#define LED_2          22
+#define LED_3          23
+#define LED_4          24
 
 
 #endif /* __PLATFORM_H_ */

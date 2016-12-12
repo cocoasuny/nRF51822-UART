@@ -42,7 +42,7 @@ static void logger_thread(void * arg)
 
     while(1)
     {
-//		printf("Test\r\n");
+		bsp_led_toggle(LED1);
 		vTaskDelay(1000);
     }
 }

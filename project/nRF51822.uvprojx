@@ -450,6 +450,11 @@
               <FileType>1</FileType>
               <FilePath>..\source\SDK1210\drivers_nrf\uart\nrf_drv_uart.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\BSP\bsp_led.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

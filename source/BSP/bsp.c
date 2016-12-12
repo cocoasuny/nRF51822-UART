@@ -26,6 +26,8 @@ void bsp_init(void)
 {
 	/* uart init */
 	uart_init();
+    bsp_led_init(LED1);
+    bsp_led_init(LED2);
 	
 	/* for test */
 	g_DeviceInformation.SeriNum[0] = 0x12;
